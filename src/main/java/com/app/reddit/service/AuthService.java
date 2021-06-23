@@ -1,5 +1,7 @@
 package com.app.reddit.service;
 
+import com.app.reddit.dto.AuthResponse;
+import com.app.reddit.dto.LoginRequest;
 import com.app.reddit.dto.RegisterRequest;
 import com.app.reddit.exception.ActivationException;
 import com.app.reddit.models.AccountVerificationToken;
@@ -7,8 +9,13 @@ import com.app.reddit.models.NotificationEmail;
 import com.app.reddit.models.User;
 import com.app.reddit.repository.TokenRepository;
 import com.app.reddit.repository.UserRepository;
+import com.app.reddit.security.JWTProvider;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,11 +35,11 @@ public class AuthService {
     TokenRepository tokenRepository;
     MailService mailService;
     MailBuilder mailBuilder;
+    AuthenticationManager authenticationManager;
+    JWTProvider jwtProvider;
 
-    // Exception mailService.sendEmail
-    @SneakyThrows
     @Transactional
-    public void register (RegisterRequest registerRequest) {
+    public void register(RegisterRequest registerRequest) throws java.rmi.activation.ActivationException {
         User user = new User();
         user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
@@ -43,9 +50,18 @@ public class AuthService {
         userRepository.save(user);
 
         String token = generateToken(user);
-        String message = mailBuilder.build("Welcome to the fucking Reddit-Clone " +
-                "Visit this link for activate your account : " + EMAIL_ACTIVATION + "/" + token);
+        String message = mailBuilder.build("Welcome to React-Spring-Reddit Clone. " +
+                "Please visit the link below to activate you account : " + EMAIL_ACTIVATION + "/" + token);
         mailService.sendEmail(new NotificationEmail("Please Activate Your Account", user.getEmail(), message));
+    }
+
+    public AuthResponse login (LoginRequest loginRequest) {
+        Authentication authenticate = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(), loginRequest.getPassword()));
+        SecurityContextHolder.getContext().setAuthentication(authenticate);
+        String authToken = jwtProvider.generateToken(authenticate);
+        return new AuthResponse(authToken, loginRequest.getUsername());
     }
 
     private String encodePassword(String password) {
@@ -61,7 +77,7 @@ public class AuthService {
         return token;
     }
 
-    public void verifyToken (String token) {
+    public void verifyToken(String token) {
         Optional<AccountVerificationToken> verificationToken = tokenRepository.findByToken(token);
         verificationToken.orElseThrow(() -> new ActivationException("Invalid Activation Token"));
         enableAccount(verificationToken.get());
@@ -70,9 +86,8 @@ public class AuthService {
     public void enableAccount(AccountVerificationToken token) {
         String username = token.getUser().getUsername();
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ActivationException("User not found : " + username));
+                .orElseThrow(() -> new ActivationException("User not found with username: " + username));
         user.setAccountStatus(true);
         userRepository.save(user);
     }
-
 }

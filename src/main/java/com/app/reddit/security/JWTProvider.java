@@ -14,32 +14,30 @@ import java.security.cert.CertificateException;
 
 @Service
 public class JWTProvider {
+    private KeyStore keystore;
 
-    private KeyStore keyStore;
 
     @PostConstruct
     public void init() {
         try {
-            keyStore = KeyStore.getInstance("JKS");
+            keystore = KeyStore.getInstance("JKS");
             InputStream resourceStream = getClass().getResourceAsStream("/keystore.jks");
-            keyStore.load(resourceStream, "password".toCharArray());
+            keystore.load(resourceStream, "rootroot".toCharArray());
         } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException e) {
-            throw new ActivationException("Exception occured loading keystore");
+            throw new ActivationException("Exception occurred while loading keystore");
         }
     }
 
-    // voir si User est OK
     public String generateToken(Authentication authentication) {
         User princ = (User) authentication.getPrincipal();
         return Jwts.builder().setSubject(princ.getUsername()).signWith(getPrivKey()).compact();
     }
 
-    private PrivateKey getPrivKey() {
+    private PrivateKey getPrivKey () {
         try {
-            return (PrivateKey) keyStore.getKey("alias", "password".toCharArray());
+            return (PrivateKey) keystore.getKey("alias", "password".toCharArray());
         } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
             throw new ActivationException("Exception occurred while retrieving public key");
         }
     }
-
 }
