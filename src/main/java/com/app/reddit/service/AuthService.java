@@ -43,8 +43,8 @@ public class AuthService {
         userRepository.save(user);
 
         String token = generateToken(user);
-        String message = mailBuilder.build("Welcome to React-Spring-Reddit Clone. " +
-                "Please visit the link below to activate you account : " + EMAIL_ACTIVATION + "/" + token);
+        String message = mailBuilder.build("Welcome to the fucking Reddit-Clone " +
+                "Visit this link for activate your account : " + EMAIL_ACTIVATION + "/" + token);
         mailService.sendEmail(new NotificationEmail("Please Activate Your Account", user.getEmail(), message));
     }
 
