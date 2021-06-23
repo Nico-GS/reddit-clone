@@ -7,6 +7,8 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.*;
@@ -29,13 +31,14 @@ public class JWTProvider {
     }
 
     public String generateToken(Authentication authentication) {
-        User princ = (User) authentication.getPrincipal();
+        org.springframework.security.core.userdetails.User princ = (User) authentication.getPrincipal();
         return Jwts.builder().setSubject(princ.getUsername()).signWith(getPrivKey()).compact();
     }
 
+    // modifier alias / refaire keystore
     private PrivateKey getPrivKey () {
         try {
-            return (PrivateKey) keystore.getKey("alias", "password".toCharArray());
+            return (PrivateKey) keystore.getKey("alias", "rootroot".toCharArray());
         } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
             throw new ActivationException("Exception occurred while retrieving public key");
         }
