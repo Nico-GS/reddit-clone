@@ -25,7 +25,7 @@ public class JWTAuthFilter extends OncePerRequestFilter {
     private JWTProvider jwtProvider;
 
     @Qualifier("inMemoryUserDetailsManager")
-    @Autowired
+    @Autowired(required = false) // true ne marche pas, ou enlever le @Qualifier
     private UserDetailsService userDetailsService;
 
     private String getTokenFromRequest(HttpServletRequest request) {
