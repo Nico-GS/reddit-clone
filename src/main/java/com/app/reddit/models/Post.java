@@ -26,6 +26,9 @@ public class Post {
     private String postTitle;
 
     @Nullable
+    private String url;
+
+    @Nullable
     @Lob
     private String description;
 
@@ -40,5 +43,6 @@ public class Post {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id", referencedColumnName = "id")
     private SubReddit subReddit;
+
 
 }
